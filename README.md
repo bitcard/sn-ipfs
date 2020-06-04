@@ -12,10 +12,10 @@
 
 ```go
 type Store interface {
-  AddFromReader(io.reader) // node,err 从reader对象中读取创建node
+  AddFromReader(io.Reader) // node,err 从reader对象中读取创建node
   AddFromBytes([]byte)     // node,err 从字节数组中读取创建node
-  Pin(node) err            // 固定文件，长期保存
-  Get(cid stirng)          // 获取node
+  Pin(node) error          // 固定文件，长期保存
+  Get(cid string)          // 获取node
   Combine([]block)         // node 按照顺序组合文件块
 }
 ```
@@ -29,8 +29,8 @@ node是所有底层文件的公共接口，block，file，dir都要满足它，�
 ```go
 type Node interface {
   Name() string
-  Cid() string
-  Type() type
+  Cid()  string
+  Type() Type
   Size() int64
 }
 ```
@@ -43,7 +43,7 @@ type Node interface {
 
 ```go
 type Dir interface {
-  Nodes() NodeIterator
+  Nodes() []Node
   Node
 }
 ```
@@ -57,7 +57,7 @@ file是可以被识别的文件，这些文件一般是通过store仓库直接�
 ```go
 type File interface {
   io.Reader
-  Blocks() BlockIterator
+  Blocks() []Block
   Node
 }
 ```

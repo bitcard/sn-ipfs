@@ -57,8 +57,8 @@ file是可以被识别的文件，这些文件一般是通过store仓库直接�
 ```go
 type File interface {
   io.Reader
-	Blocks() BlockIterator
-	Node
+  Blocks() BlockIterator
+  Node
 }
 ```
 

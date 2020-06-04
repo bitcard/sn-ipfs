@@ -13,10 +13,10 @@
 ```go
 type Store interface {
   AddFromReader(io.reader) // node,err 从reader对象中读取创建node
-	AddFromBytes([]byte)     // node,err 从字节数组中读取创建node
+  AddFromBytes([]byte)     // node,err 从字节数组中读取创建node
   Pin(node) err            // 固定文件，长期保存
-	Get(cid stirng)          // 获取node
-	Combine([]block)         // node 按照顺序组合文件块
+  Get(cid stirng)          // 获取node
+  Combine([]block)         // node 按照顺序组合文件块
 }
 ```
 

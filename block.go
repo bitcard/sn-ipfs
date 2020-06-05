@@ -3,6 +3,6 @@ package ipfs_filestore
 import "io"
 
 type Block interface {
-	io.Reader
+	Reader() io.ReadSeeker
 	Node
 }

@@ -3,14 +3,14 @@ package ipfs_filestore
 type Type uint
 
 const (
-	FIL Type = iota
+	BLK Type = iota
 	DIR
-	BLK
+	FIL
 )
 
 type Node interface {
 	Name() string
 	Cid() string
 	Type() Type
-	Size() int64
+	Size() uint64
 }

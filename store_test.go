@@ -52,3 +52,13 @@ func Test_store_Combine(t *testing.T) {
 		})
 	}
 }
+
+// 能够测试addbytes和reader
+func Test_store_AddFromBytes(t *testing.T) {
+	data := []byte("hello world")
+	file, err := Gstore.AddFromBytes(data)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(file.Cid())
+}

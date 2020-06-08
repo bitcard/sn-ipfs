@@ -1,6 +1,8 @@
 package ipfs_filestore
 
 import (
+	"bytes"
+	"errors"
 	client "github.com/ipfs/go-ipfs-api"
 	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/ipfs/go-merkledag"
@@ -18,10 +20,11 @@ func init() {
 }
 
 type Store interface {
-	AddFromReader(io.Reader) File   // node,err 从reader对象中读取创建node
-	AddFromBytes(bytes []byte) File // node,err 从字节数组中读取创建node
-	Pin(link *ipld.Link) error      // 固定文件，长期保存
-	Get(link *ipld.Link) Node       // 获取node
+	AddFromReader(io.Reader) (File, error)   // node,err 从reader对象中读取创建node
+	AddFromBytes(bytes []byte) (File, error) // node,err 从字节数组中读取创建node
+	Pin(blk Block) error                     // 固定文件，长期保存，为了更好的存储必须是block
+	PinMany(blks []Block) error
+	Get(link *ipld.Link) Node // 获取node
 	GetMany(links []*ipld.Link) []Node
 	Combine([]Block) (File, error) // node 按照顺序组合文件块
 }
@@ -43,16 +46,34 @@ type store struct {
 	api *client.Shell
 }
 
-func (s *store) AddFromReader(reader io.Reader) File {
-	return nil
+func (s *store) AddFromReader(reader io.Reader) (File, error) {
+	cid, err := s.api.Add(reader)
+	if err != nil {
+		return nil, err
+	}
+	return NewFile(s.Get(newLink(cid))), nil
 }
 
-func (s *store) AddFromBytes(bytes []byte) File {
-	return nil
+func (s *store) AddFromBytes(data []byte) (File, error) {
+	return s.AddFromReader(bytes.NewReader(data))
 }
 
-func (s *store) Pin(link *ipld.Link) error {
-	panic("implement me")
+func (s *store) Pin(blk Block) error {
+	if blk.Type() != BLK {
+		return errors.New("not a block")
+	}
+	return s.api.Pin(blk.Cid())
+}
+
+func (s *store) PinMany(blks []Block) error {
+	var err error
+	for _, blk := range blks {
+		err = s.Pin(blk)
+		if err != nil {
+			return err
+		}
+	}
+	return err
 }
 
 func (s *store) get(link *ipld.Link) (*merkledag.ProtoNode, error) {

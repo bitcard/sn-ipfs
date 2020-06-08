@@ -1,8 +1,18 @@
 package ipfs_filestore
 
-import "io"
-
 type Block interface {
-	Reader() io.ReadSeeker
 	Node
+	ToFile() File
+}
+
+type block struct {
+	Node
+}
+
+func (n block) Type() Type {
+	return BLK
+}
+
+func (n block) ToFile() File {
+	return NewFile(n.Node)
 }

@@ -93,3 +93,34 @@ func TestStore_Unpin(t *testing.T) {
 		panic(err)
 	}
 }
+
+func TestDir_Nodes(t *testing.T) {
+	var (
+		err error
+		dir Dir
+	)
+	dirCid := "Qmci4Sm9Cvm4a8fSwzbn6aKYmvmsmkGXpb5f93gBGWgyr9"
+	wantNodecid := []map[string]string{
+		{"name": "source.list", "cid": "QmRRog1H5wCfzcbCu1BNPas8mW3JuBvRqVBi8xVPFc1KhD"},
+	}
+	node := Gstore.Get(newLink(dirCid))
+	// 测试类型转化
+	_, err = node.ToFile()
+	if err == nil {
+		t.Fatal("should be dir but recognized as file")
+	}
+	dir, err = node.ToDir()
+	if err != nil {
+		t.Fatal("should be dir but can't be recognized")
+	}
+	nodes := dir.Nodes()
+	// 测试名称和cid是否符合要求
+	for i, node := range nodes {
+		if node.Cid() != wantNodecid[i]["cid"] {
+			t.Fatalf("cid : want %v but got %v", wantNodecid[i]["cid"], node.Cid())
+		}
+		if node.Name() != wantNodecid[i]["name"] {
+			t.Fatalf("name : want %v but got %v", wantNodecid[i]["name"], node.Cid())
+		}
+	}
+}

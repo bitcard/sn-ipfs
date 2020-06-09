@@ -11,10 +11,6 @@ type File interface {
 	Node
 }
 
-func NewFile(n Node) File {
-	return file{n}
-}
-
 type file struct {
 	Node
 }

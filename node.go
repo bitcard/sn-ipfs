@@ -1,6 +1,7 @@
 package ipfs_filestore
 
 import (
+	"errors"
 	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/ipfs/go-unixfs"
 )
@@ -21,6 +22,8 @@ type Node interface {
 	Size() uint64
 	RawSize() uint64
 	Links() []*ipld.Link
+	ToFile() (File, error)
+	ToDir() (Dir, error)
 }
 
 func NewNode(link *ipld.Link) Node {
@@ -85,6 +88,20 @@ func (n *node) Size() uint64 {
 func (n *node) RawSize() uint64 {
 	n.load()
 	return n.raw
+}
+
+func (n *node) ToFile() (File, error) {
+	if n.Type() != FIL && n.Type() != BLK {
+		return nil, errors.New("node not a file")
+	}
+	return file{n}, nil
+}
+
+func (n *node) ToDir() (Dir, error) {
+	if n.Type() != DIR {
+		return nil, errors.New("node not a dir")
+	}
+	return &dir{nil, n}, nil
 }
 
 func (n *node) Links() []*ipld.Link {

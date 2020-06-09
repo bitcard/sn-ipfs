@@ -20,13 +20,21 @@ func init() {
 }
 
 type Store interface {
-	AddFromReader(io.Reader) (File, error)   // node,err 从reader对象中读取创建node
-	AddFromBytes(bytes []byte) (File, error) // node,err 从字节数组中读取创建node
-	Pin(blk Block) error                     // 固定文件，长期保存，为了更好的存储必须是block
+	// node,err 从reader对象中读取创建node
+	AddFromReader(io.Reader) (File, error)
+	// node,err 从字节数组中读取创建node
+	AddFromBytes(bytes []byte) (File, error)
+	// 固定文件，长期保存，为了更好的存储必须是block
+	Pin(blk Block) error
 	PinMany(blks []Block) error
-	Get(link *ipld.Link) Node // 获取node
+	// 取消固定文件
+	Unpin(blk Block) error
+	UnpinMany(blks []Block) error
+	// 获取node
+	Get(link *ipld.Link) Node
 	GetMany(links []*ipld.Link) []Node
-	Combine([]Block) (File, error) // node 按照顺序组合文件块
+	// node 按照顺序组合文件块
+	Combine([]Block) (File, error)
 }
 
 var Gstore Store
@@ -51,7 +59,12 @@ func (s *store) AddFromReader(reader io.Reader) (File, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewFile(s.Get(newLink(cid))), nil
+	node := s.Get(newLink(cid))
+	file, err := node.ToFile()
+	if err != nil {
+		return nil, err
+	}
+	return file, nil
 }
 
 func (s *store) AddFromBytes(data []byte) (File, error) {
@@ -69,6 +82,24 @@ func (s *store) PinMany(blks []Block) error {
 	var err error
 	for _, blk := range blks {
 		err = s.Pin(blk)
+		if err != nil {
+			return err
+		}
+	}
+	return err
+}
+
+func (s *store) Unpin(blk Block) error {
+	if blk.Type() != BLK {
+		return errors.New("unpin error:not a block")
+	}
+	return s.api.Unpin(blk.Cid())
+}
+
+func (s *store) UnpinMany(blks []Block) error {
+	var err error
+	for _, blk := range blks {
+		err = s.Unpin(blk)
 		if err != nil {
 			return err
 		}
@@ -116,5 +147,9 @@ func (s *store) Combine(blocks []Block) (File, error) {
 		panic(err)
 	}
 	node := s.Get(newLink(cid))
-	return NewFile(node), nil
+	file, err := node.ToFile()
+	if err != nil {
+		return nil, err
+	}
+	return file, nil
 }

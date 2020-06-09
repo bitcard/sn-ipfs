@@ -8,13 +8,16 @@ import (
 
 // 测试了文件组合的功能
 func Test_store_Combine(t *testing.T) {
-	fmt.Println(Gstore)
 	cid1 := "QmaArqeu69Ss8dhiE9hfZDAMYG8tdoKhgEJREUjQyZLhVn"
 	//d,_ := client.NewLocalShell().BlockGet(cid1)
 	//pn,_ := merkledag.DecodeProtobuf(d)
 	//fmt.Println(len(pn.RawData()))
 	node := Gstore.Get(newLink(cid1))
-	blks := NewFile(node).Blocks()
+	file, err := node.ToFile()
+	if err != nil {
+		panic(err)
+	}
+	blks := file.Blocks()
 	type fields struct {
 		api *client.Shell
 	}
@@ -61,4 +64,32 @@ func Test_store_AddFromBytes(t *testing.T) {
 		panic(err)
 	}
 	fmt.Println(file.Cid())
+}
+
+// 通过
+func TestStore_Pin(t *testing.T) {
+	cid1 := "QmaArqeu69Ss8dhiE9hfZDAMYG8tdoKhgEJREUjQyZLhVn"
+	node := Gstore.Get(newLink(cid1))
+	file, err := node.ToFile()
+	if err != nil {
+		panic(err)
+	}
+	err = Gstore.PinMany(file.Blocks())
+	if err != nil {
+		panic(err)
+	}
+}
+
+// 通过
+func TestStore_Unpin(t *testing.T) {
+	cid1 := "QmaArqeu69Ss8dhiE9hfZDAMYG8tdoKhgEJREUjQyZLhVn"
+	node := Gstore.Get(newLink(cid1))
+	file, err := node.ToFile()
+	if err != nil {
+		panic(err)
+	}
+	err = Gstore.UnpinMany(file.Blocks())
+	if err != nil {
+		panic(err)
+	}
 }

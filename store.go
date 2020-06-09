@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	s, err := NewStore("http://127.0.0.1:5001")
+	s, err := NewStore("http://127.0.0.1:5001", "http://127.0.0.1:8080")
 	if err != nil {
 		panic(err)
 	}
@@ -39,19 +39,25 @@ type Store interface {
 
 var Gstore Store
 
-func NewStore(url string) (Store, error) {
+func NewStore(url string, gateway string) (Store, error) {
 	api := client.NewShell(url)
 	_, _, err := api.Version()
 	if err != nil {
 		return nil, err
 	}
 	return &store{
-		api: api,
+		api:     api,
+		gateway: gateway,
 	}, nil
 }
 
 type store struct {
-	api *client.Shell
+	api     *client.Shell
+	gateway string
+}
+
+func (s *store) getGateway() string {
+	return s.gateway
 }
 
 func (s *store) AddFromReader(reader io.Reader) (File, error) {

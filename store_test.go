@@ -80,6 +80,12 @@ func TestStore_Pin(t *testing.T) {
 	}
 }
 
+func TestStore_Get(t *testing.T) {
+	cid1 := "QmaArqeu69Ss8dhiE9hfZDAMYG8tdoKhgEJREUjQyZLhVn"
+	node := Gstore.Get(newLink(cid1))
+	t.Log(node.Size())
+}
+
 // 通过
 func TestStore_Unpin(t *testing.T) {
 	cid1 := "QmaArqeu69Ss8dhiE9hfZDAMYG8tdoKhgEJREUjQyZLhVn"

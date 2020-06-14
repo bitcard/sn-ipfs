@@ -2,30 +2,82 @@ package ipfs_filestore
 
 import (
 	"errors"
-	"fmt"
 	ipld "github.com/ipfs/go-ipld-format"
 	"io"
-	"net/http"
 )
 
 type File interface {
-	Data() io.ReadCloser
+	io.ReadSeeker
+	// 获取block数据
+	Block(index int) Block
 	Blocks() []Block
 	Node
 }
 
 type file struct {
+	// 当前读取的位置
+	index uint64
+	// 缓存
+	catches []byte
 	Node
 }
 
-func (f file) Data() io.ReadCloser {
-	url := Gstore.(*store).getGateway() + "/ipfs/" + f.Cid()
-	cl := newHttpClient(url, f.Size())
-	cl.open(0)
-	return cl.raw()
+func (f *file) Read(p []byte) (n int, err error) {
+	var maxBlockSize uint64 = 262144
+	// 已经读完
+	if f.index == f.Size() {
+		return 0, io.EOF
+	}
+	// 初始化缓存
+	if f.catches == nil {
+		f.catches = make([]byte, maxBlockSize)
+	}
+	// 计算block数据位置
+	blkDataIndex := f.index % maxBlockSize
+	// 当前块已经读完,拷贝新内容
+	if blkDataIndex == 0 && f.index < f.Size() {
+		blkIndex := f.index / maxBlockSize
+		n = copy(f.catches, f.Blocks()[blkIndex].Data())
+		f.catches = f.catches[:n]
+	}
+	n = copy(p, f.catches[blkDataIndex:])
+	f.index += uint64(n)
+	return n, nil
 }
 
-func (f file) Blocks() []Block {
+func (f *file) Seek(offset int64, whence int) (int64, error) {
+	var index int64
+	switch whence {
+	case io.SeekStart:
+		if offset < 0 {
+			return 0, errors.New("index out of range")
+		}
+		index = offset
+		f.index = uint64(offset)
+	case io.SeekCurrent:
+		index = int64(f.index) + offset
+		if index < 0 || index > int64(f.index) {
+			return 0, errors.New("index out of range")
+		}
+		f.index = uint64(index)
+	case io.SeekEnd:
+		index = int64(f.Size()) + offset
+		if index < 0 || index > int64(f.index) {
+			return 0, errors.New("index out of range")
+		}
+		f.index = uint64(index)
+	default:
+		return 0, errors.New("unknow whence")
+	}
+	return index, nil
+}
+
+func (f *file) Block(index int) Block {
+	node := Gstore.Get(f.Links()[index])
+	return &block{Node: node}
+}
+
+func (f *file) Blocks() []Block {
 	links := f.Links()
 	if len(links) == 0 {
 		links = []*ipld.Link{newLink(f.Cid())}
@@ -33,97 +85,7 @@ func (f file) Blocks() []Block {
 	var blocks = make([]Block, 0, len(links))
 	nodes := Gstore.GetMany(links)
 	for _, node := range nodes {
-		blocks = append(blocks, block{node})
+		blocks = append(blocks, &block{Node: node})
 	}
 	return blocks
-}
-
-func newHttpClient(url string, end uint64) *httpClient {
-	return &httpClient{url: url, conn: nil, cl: &http.Client{}, end: end}
-}
-
-type httpClient struct {
-	url   string
-	end   uint64
-	index uint64
-	conn  *http.Response
-	cl    *http.Client
-}
-
-func (h *httpClient) open(index uint64) error {
-	if h.conn != nil {
-		h.Close()
-		h.conn = nil
-	}
-	if index > h.end {
-		return errors.New("index out of range")
-	}
-	reqest, err := http.NewRequest("GET", h.url, nil)
-	if err != nil {
-		return err
-	}
-	reqest.Header.Add("Range", fmt.Sprintf("bytes=%v-%v", index, h.end))
-	h.conn, err = h.cl.Do(reqest)
-	if err != nil {
-		h.conn = nil
-		return err
-	}
-	return nil
-}
-
-func (h *httpClient) raw() io.ReadCloser {
-	return h.conn.Body
-}
-
-func (h httpClient) Read(p []byte) (n int, err error) {
-	if h.conn == nil {
-		err = h.open(h.index)
-		if err != nil {
-			return 0, err
-		}
-	}
-	n, err = h.conn.Body.Read(p)
-	h.index += uint64(n)
-	if h.index > h.end {
-		return n, io.EOF
-	}
-	return n, err
-}
-
-// 暂时废弃，不会使用
-func (h httpClient) Seek(offset int64, whence int) (int64, error) {
-	var err error
-	index := offset + int64(h.index)
-	if offset <= 0 {
-		return 0, errors.New("read out of range")
-	}
-	switch whence {
-	case io.SeekStart:
-		if offset <= 0 {
-			return 0, errors.New("read out of range")
-		}
-		err = h.open(uint64(index))
-		return offset, err
-	case io.SeekCurrent:
-		err = h.open(uint64(index))
-		if err != nil {
-			return 0, err
-		}
-		return index, err
-	case io.SeekEnd:
-		err = h.open(uint64(index))
-		if err != nil {
-			return 0, err
-		}
-		return index, err
-	default:
-		return 0, errors.New("unkonw whence")
-	}
-}
-
-func (h httpClient) Close() error {
-	if h.conn.Close {
-		return nil
-	}
-	return h.conn.Body.Close()
 }

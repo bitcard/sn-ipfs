@@ -68,6 +68,11 @@ func (n *node) Cid() string {
 	return n.cid
 }
 
+func (n *node) data() []byte {
+	n.load()
+	return n.head.Data()
+}
+
 func (n *node) Type() Type {
 	n.load()
 	switch n.head.Type() {
@@ -94,7 +99,7 @@ func (n *node) ToFile() (File, error) {
 	if n.Type() != FIL && n.Type() != BLK {
 		return nil, errors.New("node not a file")
 	}
-	return file{n}, nil
+	return &file{Node: n}, nil
 }
 
 func (n *node) ToDir() (Dir, error) {

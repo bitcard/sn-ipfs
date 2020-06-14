@@ -18,7 +18,7 @@ type file struct {
 	// 当前读取的位置
 	index uint64
 	// 缓存
-	catches []byte
+	caches []byte
 	Node
 }
 
@@ -29,18 +29,18 @@ func (f *file) Read(p []byte) (n int, err error) {
 		return 0, io.EOF
 	}
 	// 初始化缓存
-	if f.catches == nil {
-		f.catches = make([]byte, maxBlockSize)
+	if f.caches == nil {
+		f.caches = make([]byte, maxBlockSize)
 	}
 	// 计算block数据位置
 	blkDataIndex := f.index % maxBlockSize
 	// 当前块已经读完,拷贝新内容
 	if blkDataIndex == 0 && f.index < f.Size() {
 		blkIndex := f.index / maxBlockSize
-		n = copy(f.catches, f.Blocks()[blkIndex].Data())
-		f.catches = f.catches[:n]
+		n = copy(f.caches, f.Blocks()[blkIndex].Data())
+		f.caches = f.caches[:n]
 	}
-	n = copy(p, f.catches[blkDataIndex:])
+	n = copy(p, f.caches[blkDataIndex:])
 	f.index += uint64(n)
 	return n, nil
 }

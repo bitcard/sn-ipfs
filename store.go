@@ -11,13 +11,13 @@ import (
 	"io"
 )
 
-func init() {
-	s, err := NewStore("http://127.0.0.1:5001", "http://127.0.0.1:8080")
-	if err != nil {
-		panic(err)
-	}
-	Gstore = s
-}
+//func init() {
+//	s, err := NewStore("http://127.0.0.1:5001", "http://127.0.0.1:8080")
+//	if err != nil {
+//		panic(err)
+//	}
+//	Gstore = s
+//}
 
 type Store interface {
 	// node,err 从reader对象中读取创建node
@@ -36,8 +36,6 @@ type Store interface {
 	// node 按照顺序组合文件块
 	Combine([]Block) (File, error)
 }
-
-var Gstore Store
 
 func NewStore(url string, gateway string) (Store, error) {
 	api := client.NewShell(url)
@@ -123,7 +121,7 @@ func (s *store) get(link *ipld.Link) (*merkledag.ProtoNode, error) {
 }
 
 func (s *store) Get(link *ipld.Link) Node {
-	return NewNode(link)
+	return newNode(link, s)
 }
 
 // TODO: 多线程处理

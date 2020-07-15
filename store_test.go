@@ -8,11 +8,12 @@ import (
 
 // 测试了文件组合的功能
 func Test_store_Combine(t *testing.T) {
+	store := testLocalStore()
 	cid1 := "QmaArqeu69Ss8dhiE9hfZDAMYG8tdoKhgEJREUjQyZLhVn"
 	//d,_ := client.NewLocalShell().BlockGet(cid1)
 	//pn,_ := merkledag.DecodeProtobuf(d)
 	//fmt.Println(len(pn.RawData()))
-	node := Gstore.Get(newLink(cid1))
+	node := store.Get(newLink(cid1))
 	file, err := node.ToFile()
 	if err != nil {
 		panic(err)
@@ -41,9 +42,7 @@ func Test_store_Combine(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &store{
-				api: tt.fields.api,
-			}
+			s := store
 			got, err := s.Combine(tt.args.blocks)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Combine() error = %v, wantErr %v", err, tt.wantErr)
@@ -58,8 +57,9 @@ func Test_store_Combine(t *testing.T) {
 
 // 能够测试addbytes和reader
 func Test_store_AddFromBytes(t *testing.T) {
+	store := testLocalStore()
 	data := []byte("hello world")
-	file, err := Gstore.AddFromBytes(data)
+	file, err := store.AddFromBytes(data)
 	if err != nil {
 		panic(err)
 	}
@@ -68,39 +68,43 @@ func Test_store_AddFromBytes(t *testing.T) {
 
 // 通过
 func TestStore_Pin(t *testing.T) {
+	store := testLocalStore()
 	cid1 := "QmaArqeu69Ss8dhiE9hfZDAMYG8tdoKhgEJREUjQyZLhVn"
-	node := Gstore.Get(newLink(cid1))
+	node := store.Get(newLink(cid1))
 	file, err := node.ToFile()
 	if err != nil {
 		panic(err)
 	}
-	err = Gstore.PinMany(file.Blocks())
+	err = store.PinMany(file.Blocks())
 	if err != nil {
 		panic(err)
 	}
 }
 
 func TestStore_Get(t *testing.T) {
+	store := testLocalStore()
 	cid1 := "QmaArqeu69Ss8dhiE9hfZDAMYG8tdoKhgEJREUjQyZLhVn"
-	node := Gstore.Get(newLink(cid1))
+	node := store.Get(newLink(cid1))
 	t.Log(node.Size())
 }
 
 // 通过
 func TestStore_Unpin(t *testing.T) {
+	store := testLocalStore()
 	cid1 := "QmaArqeu69Ss8dhiE9hfZDAMYG8tdoKhgEJREUjQyZLhVn"
-	node := Gstore.Get(newLink(cid1))
+	node := store.Get(newLink(cid1))
 	file, err := node.ToFile()
 	if err != nil {
 		panic(err)
 	}
-	err = Gstore.UnpinMany(file.Blocks())
+	err = store.UnpinMany(file.Blocks())
 	if err != nil {
 		panic(err)
 	}
 }
 
 func TestDir_Nodes(t *testing.T) {
+	store := testLocalStore()
 	var (
 		err error
 		dir Dir
@@ -109,7 +113,7 @@ func TestDir_Nodes(t *testing.T) {
 	wantNodecid := []map[string]string{
 		{"name": "source.list", "cid": "QmRRog1H5wCfzcbCu1BNPas8mW3JuBvRqVBi8xVPFc1KhD"},
 	}
-	node := Gstore.Get(newLink(dirCid))
+	node := store.Get(newLink(dirCid))
 	// 测试类型转化
 	_, err = node.ToFile()
 	if err == nil {

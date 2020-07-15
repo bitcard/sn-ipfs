@@ -6,6 +6,7 @@ type Dir interface {
 }
 
 type dir struct {
+	store Store
 	nodes []Node
 	Node
 }
@@ -19,7 +20,7 @@ func (d *dir) Size() uint64 {
 		case FIL:
 			size = size + n.Size()
 		case DIR:
-			size = size + newDir(n).Size()
+			size = size + newDir(n, d.store).Size()
 		default:
 			continue
 		}
@@ -30,7 +31,7 @@ func (d *dir) Size() uint64 {
 func (d *dir) loadNodes() {
 	if d.nodes == nil {
 		for _, link := range d.Links() {
-			d.nodes = append(d.nodes, Gstore.Get(link))
+			d.nodes = append(d.nodes, d.store.Get(link))
 		}
 	}
 }
@@ -40,6 +41,6 @@ func (d *dir) Nodes() []Node {
 	return d.nodes
 }
 
-func newDir(n Node) Dir {
-	return &dir{nodes: nil, Node: n}
+func newDir(n Node, s Store) Dir {
+	return &dir{store: s, nodes: nil, Node: n}
 }

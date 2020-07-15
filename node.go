@@ -26,8 +26,9 @@ type Node interface {
 	ToDir() (Dir, error)
 }
 
-func NewNode(link *ipld.Link) Node {
+func newNode(link *ipld.Link, s Store) Node {
 	return &node{
+		store:  s,
 		cid:    link.Cid.String(),
 		name:   link.Name,
 		inited: false,
@@ -35,6 +36,7 @@ func NewNode(link *ipld.Link) Node {
 }
 
 type node struct {
+	store  Store
 	cid    string
 	name   string
 	raw    uint64
@@ -48,7 +50,10 @@ func (n *node) load() {
 	if n.inited {
 		return
 	}
-	pn, err := Gstore.(*store).get(newLink(n.cid))
+	pn, err := n.store.(*store).get(newLink(n.cid))
+	if pn == nil {
+		return
+	}
 	head, err := unixfs.FSNodeFromBytes(pn.Data())
 	if err != nil {
 		return
@@ -99,14 +104,14 @@ func (n *node) ToFile() (File, error) {
 	if n.Type() != FIL && n.Type() != BLK {
 		return nil, errors.New("node not a file")
 	}
-	return &file{Node: n}, nil
+	return newFile(n, n.store), nil
 }
 
 func (n *node) ToDir() (Dir, error) {
 	if n.Type() != DIR {
 		return nil, errors.New("node not a dir")
 	}
-	return &dir{nil, n}, nil
+	return newDir(n, n.store), nil
 }
 
 func (n *node) Links() []*ipld.Link {

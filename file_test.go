@@ -56,5 +56,10 @@ func TestStore_AddFromReader(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	httpserver
+	fmt.Println(file.Cid())
+}
+
+func TestDir(t *testing.T) {
+	store := testLocalStore()
+	store.Get()
 }

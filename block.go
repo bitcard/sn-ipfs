@@ -1,7 +1,7 @@
 package ipfs
 
 type Block interface {
-	Node
+	BaseNode
 	Data() []byte
 }
 

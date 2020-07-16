@@ -138,7 +138,7 @@ func (s *store) Combine(blocks []Block) (File, error) {
 	head := unixfs.NewFSNode(2)
 	newNode := merkledag.NodeWithData(nil)
 	for _, blk := range blocks {
-		newNode.AddRawLink("", newFullLink(blk.Cid(), "", blk.RawSize()))
+		newNode.AddRawLink("", newFullLink(blk.Cid(), "", blk.(*block).RawSize()))
 		head.AddBlockSize(blk.Size())
 	}
 	data, err := head.GetBytes()

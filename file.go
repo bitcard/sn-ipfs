@@ -11,7 +11,7 @@ type File interface {
 	// 获取block数据
 	Block(index int) Block
 	Blocks() []Block
-	Node
+	BaseNode
 }
 
 func newFile(n Node, s Store) *file {

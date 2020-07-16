@@ -15,6 +15,13 @@ const (
 	UNW
 )
 
+type BaseNode interface {
+	Name() string
+	Cid() string
+	Type() Type
+	Size() uint64
+}
+
 type Node interface {
 	Name() string
 	Cid() string

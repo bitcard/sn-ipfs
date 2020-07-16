@@ -14,7 +14,7 @@ type File interface {
 	BaseNode
 }
 
-func newFile(n Node, s Store) *file {
+func newFile(n Node, s *store) *file {
 	return &file{
 		store: s,
 		Node:  n,
@@ -22,7 +22,7 @@ func newFile(n Node, s Store) *file {
 }
 
 type file struct {
-	store Store
+	store *store
 	// 当前读取的位置
 	index uint64
 	// 缓存
@@ -81,7 +81,7 @@ func (f *file) Seek(offset int64, whence int) (int64, error) {
 }
 
 func (f *file) Block(index int) Block {
-	node := f.store.Get(f.Links()[index])
+	node := f.store.get(f.Links()[index])
 	return &block{Node: node}
 }
 
@@ -91,7 +91,7 @@ func (f *file) Blocks() []Block {
 		links = []*ipld.Link{newLink(f.Cid())}
 	}
 	var blocks = make([]Block, 0, len(links))
-	nodes := f.store.GetMany(links)
+	nodes := f.store.getMany(links)
 	for _, node := range nodes {
 		blocks = append(blocks, &block{Node: node})
 	}

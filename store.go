@@ -31,8 +31,8 @@ type Store interface {
 	Unpin(blk Block) error
 	UnpinMany(blks []Block) error
 	// 获取node
-	Get(link *ipld.Link) Node
-	GetMany(links []*ipld.Link) []Node
+	Get(cid string) Node
+	GetMany(cids []string) []Node
 	// node 按照顺序组合文件块
 	Combine([]Block) (File, error)
 }
@@ -63,7 +63,7 @@ func (s *store) AddFromReader(reader io.Reader) (File, error) {
 	if err != nil {
 		return nil, err
 	}
-	node := s.Get(newLink(cid))
+	node := s.get(newLink(cid))
 	file, err := node.ToFile()
 	if err != nil {
 		return nil, err
@@ -111,7 +111,7 @@ func (s *store) UnpinMany(blks []Block) error {
 	return err
 }
 
-func (s *store) get(link *ipld.Link) (*merkledag.ProtoNode, error) {
+func (s *store) getProtoNode(link *ipld.Link) (*merkledag.ProtoNode, error) {
 	cid := link.Cid.String()
 	data, err := s.api.BlockGet(cid)
 	if err != nil {
@@ -120,15 +120,28 @@ func (s *store) get(link *ipld.Link) (*merkledag.ProtoNode, error) {
 	return merkledag.DecodeProtobuf(data)
 }
 
-func (s *store) Get(link *ipld.Link) Node {
+func (s *store) Get(cid string) Node {
+	return s.get(newLink(cid))
+}
+
+func (s *store) get(link *ipld.Link) Node {
 	return newNode(link, s)
 }
 
 // TODO: 多线程处理
-func (s *store) GetMany(links []*ipld.Link) []Node {
+func (s *store) GetMany(cids []string) []Node {
+	var nodes = make([]Node, 0, len(cids))
+	for _, cid := range cids {
+		node := s.Get(cid)
+		nodes = append(nodes, node)
+	}
+	return nodes
+}
+
+func (s *store) getMany(links []*ipld.Link) []Node {
 	var nodes = make([]Node, 0, len(links))
 	for _, link := range links {
-		node := s.Get(link)
+		node := s.get(link)
 		nodes = append(nodes, node)
 	}
 	return nodes
@@ -150,7 +163,7 @@ func (s *store) Combine(blocks []Block) (File, error) {
 	if err != nil {
 		panic(err)
 	}
-	node := s.Get(newLink(cid))
+	node := s.get(newLink(cid))
 	file, err := node.ToFile()
 	if err != nil {
 		return nil, err

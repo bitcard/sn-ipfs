@@ -33,7 +33,7 @@ type Node interface {
 	ToDir() (Dir, error)
 }
 
-func newNode(link *ipld.Link, s Store) Node {
+func newNode(link *ipld.Link, s *store) Node {
 	return &node{
 		store:  s,
 		cid:    link.Cid.String(),
@@ -43,7 +43,7 @@ func newNode(link *ipld.Link, s Store) Node {
 }
 
 type node struct {
-	store  Store
+	store  *store
 	cid    string
 	name   string
 	raw    uint64
@@ -57,7 +57,7 @@ func (n *node) load() {
 	if n.inited {
 		return
 	}
-	pn, err := n.store.(*store).get(newLink(n.cid))
+	pn, err := n.store.getProtoNode(newLink(n.cid))
 	if pn == nil {
 		return
 	}

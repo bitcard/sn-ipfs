@@ -6,7 +6,7 @@ type Dir interface {
 }
 
 type dir struct {
-	store Store
+	store *store
 	nodes []Node
 	BaseNode
 }
@@ -32,7 +32,7 @@ func (d *dir) loadNodes() {
 	if d.nodes == nil {
 		node := d.BaseNode.(Node)
 		for _, link := range node.Links() {
-			d.nodes = append(d.nodes, d.store.Get(link))
+			d.nodes = append(d.nodes, d.store.get(link))
 		}
 	}
 }
@@ -42,6 +42,6 @@ func (d *dir) Nodes() []Node {
 	return d.nodes
 }
 
-func newDir(n Node, s Store) Dir {
+func newDir(n Node, s *store) Dir {
 	return &dir{store: s, nodes: nil, BaseNode: n}
 }

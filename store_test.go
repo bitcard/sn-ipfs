@@ -13,7 +13,7 @@ func Test_store_Combine(t *testing.T) {
 	//d,_ := client.NewLocalShell().BlockGet(cid1)
 	//pn,_ := merkledag.DecodeProtobuf(d)
 	//fmt.Println(len(pn.RawData()))
-	node := store.Get(newLink(cid1))
+	node := store.Get(cid1)
 	file, err := node.ToFile()
 	if err != nil {
 		panic(err)
@@ -70,7 +70,7 @@ func Test_store_AddFromBytes(t *testing.T) {
 func TestStore_Pin(t *testing.T) {
 	store := testLocalStore()
 	cid1 := "QmaArqeu69Ss8dhiE9hfZDAMYG8tdoKhgEJREUjQyZLhVn"
-	node := store.Get(newLink(cid1))
+	node := store.Get(cid1)
 	file, err := node.ToFile()
 	if err != nil {
 		panic(err)
@@ -84,7 +84,7 @@ func TestStore_Pin(t *testing.T) {
 func TestStore_Get(t *testing.T) {
 	store := testLocalStore()
 	cid1 := "QmaArqeu69Ss8dhiE9hfZDAMYG8tdoKhgEJREUjQyZLhVn"
-	node := store.Get(newLink(cid1))
+	node := store.Get(cid1)
 	t.Log(node.Size())
 }
 
@@ -92,7 +92,7 @@ func TestStore_Get(t *testing.T) {
 func TestStore_Unpin(t *testing.T) {
 	store := testLocalStore()
 	cid1 := "QmaArqeu69Ss8dhiE9hfZDAMYG8tdoKhgEJREUjQyZLhVn"
-	node := store.Get(newLink(cid1))
+	node := store.Get(cid1)
 	file, err := node.ToFile()
 	if err != nil {
 		panic(err)
@@ -113,7 +113,7 @@ func TestDir_Nodes(t *testing.T) {
 	wantNodecid := []map[string]string{
 		{"name": "source.list", "cid": "QmRRog1H5wCfzcbCu1BNPas8mW3JuBvRqVBi8xVPFc1KhD"},
 	}
-	node := store.Get(newLink(dirCid))
+	node := store.Get(dirCid)
 	// 测试类型转化
 	_, err = node.ToFile()
 	if err == nil {

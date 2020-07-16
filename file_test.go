@@ -21,7 +21,7 @@ func Test_file_Reader(t *testing.T) {
 	store := testLocalStore()
 	var offset int64 = 15552
 	cid := "QmaArqeu69Ss8dhiE9hfZDAMYG8tdoKhgEJREUjQyZLhVn"
-	node := store.Get(newLink(cid))
+	node := store.Get(cid)
 	file, err := node.ToFile()
 	if err != nil {
 		panic(err)
@@ -61,5 +61,10 @@ func TestStore_AddFromReader(t *testing.T) {
 
 func TestDir(t *testing.T) {
 	store := testLocalStore()
-	store.Get()
+	node := store.Get("Qmci4Sm9Cvm4a8fSwzbn6aKYmvmsmkGXpb5f93gBGWgyr9")
+	dir, err := node.ToDir()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(dir.Cid())
 }

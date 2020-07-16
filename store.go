@@ -37,15 +37,15 @@ type Store interface {
 	Combine([]Block) (File, error)
 }
 
-func NewStore(url string, gateway string) (Store, error) {
-	api := client.NewShell(url)
+func NewStore(apiAddr string, gatewayAddr string) (Store, error) {
+	api := client.NewShell(apiAddr)
 	_, _, err := api.Version()
 	if err != nil {
 		return nil, err
 	}
 	return &store{
 		api:     api,
-		gateway: gateway,
+		gateway: gatewayAddr,
 	}, nil
 }
 

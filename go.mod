@@ -1,4 +1,4 @@
-module ipfs-filestore
+module github.com/shiningacg/sn-ipfs
 
 go 1.14
 

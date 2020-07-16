@@ -1,6 +1,7 @@
-package ipfs_filestore
+package ipfs
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"testing"
@@ -37,4 +38,23 @@ func Test_file_Reader(t *testing.T) {
 	if uint64(n) != wantRead {
 		t.Fatalf("should read %v but read %v", wantRead, n)
 	}
+}
+
+func TestStore_AddFromBytes(t *testing.T) {
+	store := testLocalStore()
+	file, err := store.AddFromBytes([]byte("Hello world"))
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(file.Cid())
+}
+
+func TestStore_AddFromReader(t *testing.T) {
+	store := testLocalStore()
+	f, _ := os.Open("./README.md")
+	file, err := store.AddFromReader(f)
+	if err != nil {
+		panic(err)
+	}
+	httpserver
 }

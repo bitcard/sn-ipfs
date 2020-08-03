@@ -82,11 +82,17 @@ func (n *node) Cid() string {
 
 func (n *node) data() []byte {
 	n.load()
+	if n.head == nil {
+		return nil
+	}
 	return n.head.Data()
 }
 
 func (n *node) Type() Type {
 	n.load()
+	if n.head == nil {
+		return UNW
+	}
 	switch n.head.Type() {
 	case 1:
 		return DIR
@@ -99,6 +105,9 @@ func (n *node) Type() Type {
 
 func (n *node) Size() uint64 {
 	n.load()
+	if n.head == nil {
+		return 0
+	}
 	return n.head.FileSize()
 }
 

@@ -32,29 +32,37 @@ block并不是ipfs层面的block，它一定包含数据，是数据存储的最
 
 ### example
 ```go
-const (
-    apiAddr = "127.0.0.1:5001"
-    gatewayAddr = "127.0.0.1:8080"
+    const(
+	apiAddr     = "127.0.0.1:5001"
+	gatewayAddr = "127.0.0.1:8080"
 
-    singleFileCid = "QmVtZPoeiqpREqkpTTNMzXkUt74SgQA4JYMG8zPjMVULby"
-    DirCid = "QmeYG2g2LuTnEuekqBYEhWFwUju62D5AinjtRg6kFSv3bz"
-)
-func main() {
-    // Creat a store
-    store := fs.NewStore(apiAddr,gatewayAddr)
-    // Create a node, notice that it won't be init until being used
-    node := store.Get(singleFileCid)
-    if node.IsFile() {
-        file,_ := node.ToFile()
-        data,_ := ioutils.ReadAll(file)
-        fmt.Println(string(data))
-    }
-    if node.IsDir() {
-    	fmt.Println("Dir:")
-        for _,node := range dir.Nodes() {
-        	fmt.Println(node.Name(),node.Type())
-        }
-    }
-}
+	singleFileCid = "QmVtZPoeiqpREqkpTTNMzXkUt74SgQA4JYMG8zPjMVULby"
+	emptyDirCid   = "QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn"
+	)
+	var file File
+	var dir Dir
+	// Creat a store
+	store, err := NewStore(apiAddr, gatewayAddr)
+	if err != nil {
+		panic(err)
+	}
+	// Create a node, notice that it won't be init until being used
+	node := store.Get(singleFileCid)
+	if file, err = node.ToFile(); err == nil {
+		data, _ := ioutil.ReadAll(file)
+		fmt.Println(string(data))
+	}
+	node = store.Get(emptyDirCid)
+	if dir, err = node.ToDir(); err == nil {
+		fmt.Println("Dir:")
+		// Add a file to dir
+		dir, err = dir.AddFile(file)
+		if err != nil {
+			panic(err)
+		}
+		for _, node := range dir.Nodes() {
+			fmt.Println(node.Name(), node.Type())
+		}
+	}
 ```
 更多的例子可以查看测试代码

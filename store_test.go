@@ -3,8 +3,44 @@ package ipfs
 import (
 	"fmt"
 	client "github.com/ipfs/go-ipfs-api"
+	"io/ioutil"
 	"testing"
 )
+
+func TestExample(t *testing.T) {
+	const (
+		apiAddr     = "127.0.0.1:5001"
+		gatewayAddr = "127.0.0.1:8080"
+
+		singleFileCid = "QmVtZPoeiqpREqkpTTNMzXkUt74SgQA4JYMG8zPjMVULby"
+		emptyDirCid   = "QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn"
+	)
+	var file File
+	var dir Dir
+	// Creat a store
+	store, err := NewStore(apiAddr, gatewayAddr)
+	if err != nil {
+		panic(err)
+	}
+	// Create a node, notice that it won't be init until being used
+	node := store.Get(singleFileCid)
+	if file, err = node.ToFile(); err == nil {
+		data, _ := ioutil.ReadAll(file)
+		fmt.Println(string(data))
+	}
+	node = store.Get(emptyDirCid)
+	if dir, err = node.ToDir(); err == nil {
+		fmt.Println("Dir:")
+		// Add a file to dir
+		dir, err = dir.AddFile(file)
+		if err != nil {
+			panic(err)
+		}
+		for _, node := range dir.Nodes() {
+			fmt.Println(node.Name(), node.Type())
+		}
+	}
+}
 
 // 测试了文件组合的功能
 func Test_store_Combine(t *testing.T) {

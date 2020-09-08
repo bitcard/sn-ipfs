@@ -6,7 +6,7 @@ import (
 	"github.com/ipfs/go-unixfs"
 )
 
-type Type uint
+type Type int32
 
 const (
 	BLK Type = iota
@@ -20,20 +20,17 @@ type BaseNode interface {
 	Cid() string
 	Type() Type
 	Size() uint64
+	RawSize() uint64
 }
 
 type Node interface {
-	Name() string
-	Cid() string
-	Type() Type
-	Size() uint64
-	RawSize() uint64
+	BaseNode
 	Links() []*ipld.Link
 	ToFile() (File, error)
 	ToDir() (Dir, error)
 }
 
-func newNode(link *ipld.Link, s *store) Node {
+func newNode(link *ipld.Link, s *store) *node {
 	return &node{
 		store:  s,
 		cid:    link.Cid.String(),

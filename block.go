@@ -1,5 +1,6 @@
 package ipfs
 
+// Block肯定是一个文件
 type Block interface {
 	BaseNode
 	Data() []byte

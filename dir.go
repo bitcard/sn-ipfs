@@ -2,6 +2,7 @@ package ipfs
 
 type Dir interface {
 	Nodes() []Node
+	AddFile(f File) (Dir, error)
 	BaseNode
 }
 
@@ -9,6 +10,15 @@ type dir struct {
 	store *store
 	nodes []Node
 	BaseNode
+}
+
+func (d *dir) AddFile(f File) (Dir, error) {
+	nodes := append(d.nodes, f.(*file).Node)
+	node, err := d.store.combine(DIR, nodes)
+	if err != nil {
+		return nil, err
+	}
+	return node.ToDir()
 }
 
 // 谨慎执行，时间会比较久

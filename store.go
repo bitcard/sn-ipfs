@@ -7,6 +7,7 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/ipfs/go-merkledag"
 	"github.com/ipfs/go-unixfs"
+	unixfs_pb "github.com/ipfs/go-unixfs/pb"
 	mh "github.com/multiformats/go-multihash"
 	"io"
 )
@@ -75,6 +76,7 @@ func (s *store) AddFromBytes(data []byte) (File, error) {
 	return s.AddFromReader(bytes.NewReader(data))
 }
 
+// TODO: 支持file等文件等递归操作
 func (s *store) Pin(blk Block) error {
 	if blk.Type() != BLK {
 		return errors.New("not a block")
@@ -124,7 +126,7 @@ func (s *store) Get(cid string) Node {
 	return s.get(newLink(cid))
 }
 
-func (s *store) get(link *ipld.Link) Node {
+func (s *store) get(link *ipld.Link) *node {
 	return newNode(link, s)
 }
 
@@ -148,25 +150,39 @@ func (s *store) getMany(links []*ipld.Link) []Node {
 }
 
 func (s *store) Combine(blocks []Block) (File, error) {
-	head := unixfs.NewFSNode(2)
-	newNode := merkledag.NodeWithData(nil)
-	for _, blk := range blocks {
-		newNode.AddRawLink("", newFullLink(blk.Cid(), "", blk.(*block).RawSize()))
-		head.AddBlockSize(blk.Size())
+	nodes := make([]Node, 0, len(blocks))
+	for _, b := range blocks {
+		nodes = append(nodes, b.(*block).Node)
 	}
+	node, err := s.combine(FIL, nodes)
+	if err != nil {
+		return nil, err
+	}
+	return node.ToFile()
+}
+
+// TODO:不直接存放数据进入ipfs，而是让用户选择是否存放
+func (s *store) combine(tp Type, nodes []Node) (*node, error) {
+	// 创建空的文件节点
+	head := unixfs.NewFSNode(unixfs_pb.Data_DataType(tp))
+	newNode := merkledag.NodeWithData(nil)
+	// 添加block
+	for _, node := range nodes {
+		newNode.AddRawLink("", newFullLink(node.Cid(), "", node.RawSize()))
+		head.AddBlockSize(node.Size())
+	}
+	// 生成头部pb数据，准备block
 	data, err := head.GetBytes()
 	if err != nil {
 		return nil, err
 	}
 	newNode.SetData(data)
+	// 存放block信息到ipfs
 	cid, err := s.api.BlockPut(newNode.RawData(), "", mh.Codes[mh.SHA2_256], -1)
 	if err != nil {
 		panic(err)
 	}
+	// 从ipfs中加载存入的信息
 	node := s.get(newLink(cid))
-	file, err := node.ToFile()
-	if err != nil {
-		return nil, err
-	}
-	return file, nil
+	return node, nil
 }

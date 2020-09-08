@@ -15,6 +15,19 @@ const (
 	UNW
 )
 
+func (t Type) String() string {
+	switch t {
+	case BLK:
+		return "Block"
+	case DIR:
+		return "Directory"
+	case FIL:
+		return "File"
+	default:
+		return "Unknown"
+	}
+}
+
 type BaseNode interface {
 	Name() string
 	Cid() string

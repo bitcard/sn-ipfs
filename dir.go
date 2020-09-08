@@ -47,6 +47,7 @@ func (d *dir) loadNodes() {
 	}
 }
 
+// TODO: 添加迭代器遍历
 func (d *dir) Nodes() []Node {
 	d.loadNodes()
 	return d.nodes

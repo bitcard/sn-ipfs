@@ -6,7 +6,7 @@
 2. 能够获取到文件下载链接，同时也能够直接读取内容
 3. 可以访问底层文件块，node无权限修改，但是store可以
 
-## 抽象
+## 一些概念
 
 ### store：仓库
 
@@ -30,3 +30,31 @@ file是可以被识别的文件，这些文件一般是通过store仓库直接�
 
 block并不是ipfs层面的block，它一定包含数据，是数据存储的最小单元，可以进行拼接操作，可以转化为file。这种类型的对象应该只由file的blocks方法产生，普通dir和file操作不会产生block类型的node
 
+### example
+```go
+const (
+    apiAddr = "127.0.0.1:5001"
+    gatewayAddr = "127.0.0.1:8080"
+
+    singleFileCid = "QmVtZPoeiqpREqkpTTNMzXkUt74SgQA4JYMG8zPjMVULby"
+    DirCid = "QmeYG2g2LuTnEuekqBYEhWFwUju62D5AinjtRg6kFSv3bz"
+)
+func main() {
+    // Creat a store
+    store := fs.NewStore(apiAddr,gatewayAddr)
+    // Create a node, notice that it won't be init until being used
+    node := store.Get(singleFileCid)
+    if node.IsFile() {
+        file,_ := node.ToFile()
+        data,_ := ioutils.ReadAll(file)
+        fmt.Println(string(data))
+    }
+    if node.IsDir() {
+    	fmt.Println("Dir:")
+        for _,node := range dir.Nodes() {
+        	fmt.Println(node.Name(),node.Type())
+        }
+    }
+}
+```
+更多的例子可以查看测试代码

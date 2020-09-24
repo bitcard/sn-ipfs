@@ -53,33 +53,37 @@ func newNode(link *ipld.Link, s *store) *node {
 }
 
 type node struct {
-	store  *store
-	cid    string
-	name   string
-	raw    uint64
-	tp     Type
-	head   *unixfs.FSNode
-	links  []*ipld.Link
-	inited bool
+	store    *store
+	cid      string
+	name     string
+	raw      uint64
+	tp       Type
+	head     *unixfs.FSNode
+	links    []*ipld.Link
+	inited   bool
+	failTime uint8
 }
 
-func (n *node) load() {
+func (n *node) load() bool {
 	if n.inited {
-		return
+		return true
 	}
 	pn, err := n.store.getProtoNode(newLink(n.cid))
 	if pn == nil {
-		return
+		n.failTime++
+		return false
 	}
 	head, err := unixfs.FSNodeFromBytes(pn.Data())
 	if err != nil {
-		return
+		n.failTime++
+		return false
 	}
 	raw, _ := pn.Marshal()
 	n.raw = uint64(len(raw))
 	n.head = head
 	n.links = pn.Links()
 	n.inited = true
+	return n.inited
 }
 
 func (n *node) Name() string {
@@ -127,6 +131,9 @@ func (n *node) RawSize() uint64 {
 }
 
 func (n *node) ToFile() (File, error) {
+	if n.failed() {
+		return nil, ErrLoadNode
+	}
 	if n.Type() != FIL && n.Type() != BLK {
 		return nil, errors.New("node not a file")
 	}
@@ -134,10 +141,17 @@ func (n *node) ToFile() (File, error) {
 }
 
 func (n *node) ToDir() (Dir, error) {
+	if n.failed() {
+		return nil, ErrLoadNode
+	}
 	if n.Type() != DIR {
 		return nil, errors.New("node not a dir")
 	}
 	return newDir(n, n.store), nil
+}
+
+func (n node) failed() bool {
+	return n.failTime > 5
 }
 
 func (n *node) Links() []*ipld.Link {

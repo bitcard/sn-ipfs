@@ -20,6 +20,10 @@ import (
 //	Gstore = s
 //}
 
+var (
+	ErrLoadNode = errors.New("无法加载节点数据")
+)
+
 type Store interface {
 	// node,err 从reader对象中读取创建node
 	AddFromReader(io.Reader) (File, error)
@@ -126,8 +130,14 @@ func (s *store) Get(cid string) Node {
 	return s.get(newLink(cid))
 }
 
+// TODO:数据加载超时，运行ctx控制
 func (s *store) get(link *ipld.Link) *node {
-	return newNode(link, s)
+	node := newNode(link, s)
+	// 加载失败
+	if !node.load() {
+		return node
+	}
+	return node
 }
 
 // TODO: 多线程处理

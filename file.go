@@ -137,16 +137,15 @@ func (f *file) unload() {
 }
 
 func (f *file) Block(index int) Block {
-	// 首先要查看是否是leafParents
-	if f.isLeafNode() {
-		return nil
-	}
-	panic("implement me")
+	node := f.store.get(f.Links()[index])
+	return &block{Node: node}
 }
 
 func (f *file) Blocks() []Block {
-	if f.isLeafNode() {
-		return nil
+	nodes := f.Children()
+	var blocks = make([]Block, 0, len(nodes))
+	for _, node := range nodes {
+		blocks = append(blocks, &block{Node: node})
 	}
-	panic("implement me")
+	return blocks
 }

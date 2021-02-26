@@ -3,18 +3,21 @@ package ipfs
 import (
 	"fmt"
 	client "github.com/ipfs/go-ipfs-api"
+	"io"
 	"io/ioutil"
+	"os"
 	"testing"
 )
 
-func TestExample(t *testing.T) {
-	const (
-		apiAddr     = "127.0.0.1:5001"
-		gatewayAddr = "127.0.0.1:8080"
+const (
+	apiAddr     = "127.0.0.1:5001"
+	gatewayAddr = "127.0.0.1:8080"
 
-		singleFileCid = "QmVtZPoeiqpREqkpTTNMzXkUt74SgQA4JYMG8zPjMVULby"
-		emptyDirCid   = "QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn"
-	)
+	singleFileCid = "QmVtZPoeiqpREqkpTTNMzXkUt74SgQA4JYMG8zPjMVULby"
+	emptyDirCid   = "QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn"
+)
+
+func TestExample(t *testing.T) {
 	var file File
 	var dir Dir
 	// Creat a store
@@ -168,5 +171,43 @@ func TestDir_Nodes(t *testing.T) {
 		if node.Name() != wantNodecid[i]["name"] {
 			t.Fatalf("name : want %v but got %v", wantNodecid[i]["name"], node.Cid())
 		}
+	}
+}
+
+func TestAddFromFile(t *testing.T) {
+	f, err := os.Open("./06.webp")
+	if err != nil {
+		panic(err)
+	}
+	store, err := NewStore(apiAddr, gatewayAddr)
+	file, err := store.AddFromReader(f)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(file.Size(), file.Cid())
+}
+
+func TestReadFromStore(t *testing.T) {
+	store, err := NewStore(apiAddr, gatewayAddr)
+	if err != nil {
+		panic(err)
+	}
+	pic, err := store.Get("QmdbFrjizFkgpwL8H6zKNLM4XR6wPWpaqGe9cYfJyHWwBK").ToFile()
+	w, _ := os.Create("pic.webp")
+	defer w.Close()
+	_, err = io.Copy(w, pic)
+	if err != nil {
+		panic(err)
+	}
+
+	vdo, err := store.Get("QmWCXym1Y3mSGxzD7zeMJSAt8DJrYyQwm5KbwyfVzWEkQS").ToFile()
+	if err != nil {
+		panic(err)
+	}
+	w, _ = os.Create("video.mkv")
+	defer w.Close()
+	_, err = io.Copy(w, vdo)
+	if err != nil {
+		panic(err)
 	}
 }

@@ -39,6 +39,7 @@ type BaseNode interface {
 type Node interface {
 	BaseNode
 	Links() []*ipld.Link
+	Children() []Node
 	ToFile() (File, error)
 	ToDir() (Dir, error)
 }
@@ -128,6 +129,15 @@ func (n *node) Size() uint64 {
 func (n *node) RawSize() uint64 {
 	n.load()
 	return n.raw
+}
+
+func (n *node) Children() []Node {
+	n.load()
+	nodes := make([]Node, 0, len(n.links))
+	for _, v := range n.links {
+		nodes = append(nodes, n.store.get(v))
+	}
+	return nodes
 }
 
 func (n *node) ToFile() (File, error) {

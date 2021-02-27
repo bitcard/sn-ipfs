@@ -211,3 +211,37 @@ func TestReadFromStore(t *testing.T) {
 		panic(err)
 	}
 }
+
+func TestSeekFile(t *testing.T) {
+	store, err := NewStore(apiAddr, gatewayAddr)
+	if err != nil {
+		panic(err)
+	}
+	pic, err := store.Get("QmWCXym1Y3mSGxzD7zeMJSAt8DJrYyQwm5KbwyfVzWEkQS").ToFile()
+	pic.Seek(0, io.SeekStart)
+	var bt1 = make([]byte, 1240)
+	var bt2 = make([]byte, 1240*2)
+	pic.Seek(12400000, io.SeekStart)
+	n, err := pic.Read(bt2)
+	if err != nil {
+		panic(err)
+	}
+	if n != len(bt2) {
+		panic("")
+	}
+	pic.Seek(12400000+1240, io.SeekStart)
+	n, err = pic.Read(bt1)
+	if err != nil {
+		panic(err)
+	}
+	if n != len(bt1) {
+		panic("")
+	}
+	for i, v := range bt1 {
+		if v != bt2[1240+i] {
+			fmt.Println(bt1)
+			fmt.Println(bt2[1240:])
+			panic("")
+		}
+	}
+}

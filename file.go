@@ -64,6 +64,8 @@ func (f *file) Read(p []byte) (int, error) {
 		index = index - cf.Size()
 	}
 	// 找到block，转化为文件，开始读写
+	// 对应seek找到读取的位置
+	currentChild.Seek(int64(index), io.SeekStart)
 	n, err := currentChild.Read(p)
 	if err == nil || err == io.EOF {
 		f.index = f.index + uint64(n)
